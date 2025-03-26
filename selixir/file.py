@@ -5,6 +5,50 @@ import logging
 # Get the logger
 logger = logging.getLogger("selixir")
 
+# Constants
+TEMP_FILE_EXTENSIONS = (".crdownload", ".tmp", ".part")
+
+
+def _validate_directory(directory):
+    """
+    Internal function: Validate that directory exists and is actually a directory.
+
+    Args:
+        directory: The directory path to validate
+
+    Raises:
+        FileNotFoundError: If the directory does not exist
+        NotADirectoryError: If the path is not a directory
+    """
+    if not os.path.exists(directory):
+        raise FileNotFoundError(f"Directory does not exist: {directory}")
+
+    if not os.path.isdir(directory):
+        raise NotADirectoryError(f"Path is not a directory: {directory}")
+
+
+def _get_latest_file_from_list(file_list, directory):
+    """
+    Internal function: Get the most recently modified file from a list of filenames.
+
+    Args:
+        file_list: List or set of filenames (not full paths)
+        directory: The directory containing the files
+
+    Returns:
+        The full path of the latest file, or None if no files exist or an error occurs
+    """
+    if not file_list:
+        return None
+
+    try:
+        return max((os.path.join(directory, f) for f in file_list), key=os.path.getctime)
+    except ValueError:
+        return None
+    except Exception as e:
+        logger.error(f"Error getting latest file from list: {e}")
+        return None
+
 
 def get_latest_file_path(directory):
     """
@@ -20,19 +64,12 @@ def get_latest_file_path(directory):
         FileNotFoundError: If the directory does not exist.
         PermissionError: If there is a permission issue accessing the directory.
     """
-    if not os.path.exists(directory):
-        raise FileNotFoundError(f"Directory does not exist: {directory}")
-
-    if not os.path.isdir(directory):
-        raise NotADirectoryError(f"Path is not a directory: {directory}")
+    _validate_directory(directory)
 
     try:
-        files = [os.path.join(directory, f) for f in os.listdir(directory) if not f.endswith((".crdownload", ".tmp")) and os.path.isfile(os.path.join(directory, f))]
+        files = [f for f in os.listdir(directory) if not f.endswith(TEMP_FILE_EXTENSIONS) and os.path.isfile(os.path.join(directory, f))]
 
-        if not files:
-            return None
-
-        return max(files, key=os.path.getctime)
+        return _get_latest_file_from_list(files, directory)
     except ValueError:
         return None
     except PermissionError as e:
@@ -53,20 +90,33 @@ def wait_for_new_file(directory, timeout_seconds=30, previous_path=None):
 
     Returns:
         The path of the new file, or raises an exception if the timeout is exceeded.
+
+    Raises:
+        FileNotFoundError: If the directory does not exist
+        NotADirectoryError: If the path is not a directory
+        Exception: If no new file is found within the timeout period
     """
+    _validate_directory(directory)
+
+    logger.debug(f"Waiting for new file in {directory} (timeout: {timeout_seconds}s)")
+
     end_time = time.time() + timeout_seconds
     while time.time() < end_time:
         latest_file = get_latest_file_path(directory)
         if previous_path is None:
             if latest_file:
+                logger.info(f"Found file: {os.path.basename(latest_file)}")
                 return latest_file  # Return the first valid file found
         else:
             if latest_file and latest_file != previous_path:
+                logger.info(f"Found new file: {os.path.basename(latest_file)}")
                 return latest_file  # Return a new file if it's different from previous_path
 
         time.sleep(1)
 
-    raise Exception(f"No new file found in {directory} within {timeout_seconds} seconds.")
+    error_msg = f"No new file found in {directory} within {timeout_seconds} seconds."
+    logger.error(error_msg)
+    raise Exception(error_msg)
 
 
 def wait_for_download_completion(directory, before_files, timeout=60):
@@ -86,11 +136,7 @@ def wait_for_download_completion(directory, before_files, timeout=60):
         NotADirectoryError: If the path is not a directory
         TimeoutError: If no download completes within the timeout period
     """
-    if not os.path.exists(directory):
-        raise FileNotFoundError(f"Directory does not exist: {directory}")
-
-    if not os.path.isdir(directory):
-        raise NotADirectoryError(f"Path is not a directory: {directory}")
+    _validate_directory(directory)
 
     logger.info(f"Waiting for download completion (max wait time: {timeout} seconds)...")
 
@@ -103,10 +149,10 @@ def wait_for_download_completion(directory, before_files, timeout=60):
         check_count += 1
 
         try:
-            # 一時ファイルを除外して、現在のファイル一覧を取得
-            current_files = set(f for f in os.listdir(directory) if not f.endswith((".crdownload", ".tmp", "part")))
+            # Get the current file list, excluding temporary files
+            current_files = set(f for f in os.listdir(directory) if not f.endswith(TEMP_FILE_EXTENSIONS))
 
-            # 進行状況ログ（30秒ごと）
+            # Progress logging (every 30 seconds)
             if check_count % 30 == 0:
                 if len(current_files) > last_files_count:
                     logger.info(f"New files detected. Currently {len(current_files)} files.")
@@ -114,40 +160,41 @@ def wait_for_download_completion(directory, before_files, timeout=60):
                 else:
                     logger.debug(f"Waiting for download... {check_count} seconds elapsed")
 
-            # 新しく作成されたファイルを取得
+            # Get newly created files
             new_files = current_files - before_files
 
             if new_files:
                 new_files_list = list(new_files)
                 logger.info(f"New files detected: {len(new_files_list)} files")
 
-                # ダウンロード完了をさらに確認（完了確認のために3秒待機）
+                # Additional wait to confirm download completion (3 seconds)
                 time.sleep(3)
 
-                # 最新のファイルを返す
-                try:
-                    latest_file = max((os.path.join(directory, f) for f in new_files), key=os.path.getctime)
+                # Return the latest file
+                latest_file = _get_latest_file_from_list(new_files, directory)
+                if latest_file:
                     logger.info(f"Download complete: {os.path.basename(latest_file)}")
                     return latest_file
-                except ValueError as e:
-                    logger.error(f"Failed to get latest file: {e}")
+                else:
+                    logger.error("Failed to get latest file")
         except Exception as e:
             logger.error(f"Error while checking downloads: {e}")
 
-    # タイムアウトした場合、存在するファイルを再確認
+    # If timed out, check existing files again
     try:
-        current_files = set(f for f in os.listdir(directory) if not f.endswith((".crdownload", ".tmp", "part")))
+        current_files = set(f for f in os.listdir(directory) if not f.endswith(TEMP_FILE_EXTENSIONS))
         new_files = current_files - before_files
 
         if new_files:
-            # タイムアウトしたが新規ファイルが見つかった場合
-            latest_file = max((os.path.join(directory, f) for f in new_files), key=os.path.getctime)
-            logger.warning(f"File found after timeout: {os.path.basename(latest_file)}")
-            return latest_file
+            # File found after timeout
+            latest_file = _get_latest_file_from_list(new_files, directory)
+            if latest_file:
+                logger.warning(f"File found after timeout: {os.path.basename(latest_file)}")
+                return latest_file
     except Exception as e:
         logger.error(f"Error checking files after timeout: {e}")
 
-    # 全ての方法でファイルが見つからなかった場合
+    # If no files were found by any method
     error_msg = f"Download did not complete within {timeout} seconds."
     logger.error(error_msg)
     raise TimeoutError(error_msg)
