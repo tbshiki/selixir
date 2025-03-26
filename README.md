@@ -99,7 +99,7 @@ if success:
 # JavaScriptを使用して要素へスクロール
 selixir.scroll_to_element_by_js(driver, element)
 
-# 推奨: 様々な方法を組み合わせた堅牢なスクロール
+# 様々な方法を組み合わせた堅牢なスクロール
 selixir.scroll_to_target(driver, element_or_xpath)
 ```
 

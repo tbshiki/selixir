@@ -4,6 +4,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
+import logging
+
+# ロガーの取得
+logger = logging.getLogger("selixir")
 
 
 def scroll_to_element_by_js(driver, element, top_offset=100):
@@ -43,7 +47,7 @@ def scroll_to_target(driver, target, top_offset=100, time_sleep=1):
         else:
             element = driver.find_element(By.XPATH, target)
     except NoSuchElementException:
-        print("Element not found.")
+        logger.warning("Element not found.")
         return
 
     try:
@@ -53,33 +57,14 @@ def scroll_to_target(driver, target, top_offset=100, time_sleep=1):
 
     except Exception as e:
         # If ActionChains fails, fallback to JavaScript scrolling
-        print(f"ActionChains scroll failed: {e}. Falling back to JavaScript scrolling.")
+        logger.warning(f"ActionChains scroll failed: {e}. Falling back to JavaScript scrolling.")
         try:
             if isinstance(element, WebElement):
                 scroll_to_element_by_js(driver, element, top_offset)
             else:
-                print("Cannot scroll to element: invalid element reference")
+                logger.error("Cannot scroll to element: invalid element reference")
         except Exception as js_error:
-            print(f"JavaScript scrolling also failed: {js_error}")
+            logger.error(f"JavaScript scrolling also failed: {js_error}")
 
 
-##
-# Anything below this is not recommended: These are legacy functions.
-# Use scroll_to_target() instead which provides more robust scrolling behavior.
-##
-def scroll_to_xpath(driver, element_xpath, time_sleep=1):
-    """
-    Scrolls the browser window to the element specified by the XPath.
 
-    Args:
-        driver: The WebDriver instance controlling the browser.
-        element_xpath: The XPath of the element to scroll to.
-        time_sleep: Optional; Time to wait after scrolling to the element.
-
-    """
-    scroll_point = driver.find_element(By.XPATH, element_xpath)
-    actions = ActionChains(driver)
-    actions.move_to_element(scroll_point).perform()
-
-    # Optional: Wait for a certain time after scrolling
-    WebDriverWait(driver, time_sleep).until(lambda d: scroll_point.is_displayed())

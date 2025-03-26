@@ -3,7 +3,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 
 import random
@@ -150,10 +150,20 @@ def wait_with_buffer(driver, time_sleep=1, buffer_time=0.5, base_wait=10):
         buffer_time: 追加でランダムに待機する最大時間（秒）
         base_wait: ページ読み込み完了を待つ最大時間（秒）
     """
-    WebDriverWait(driver, base_wait).until(lambda d: d.execute_script("return document.readyState") == "complete")
-    wait_time = random.uniform(time_sleep, time_sleep + buffer_time)
-    start = time.time()
-    WebDriverWait(driver, wait_time).until(lambda d: time.time() - start > wait_time)
+    try:
+        # ページの読み込み完了を待つ
+        WebDriverWait(driver, base_wait).until(lambda d: d.execute_script("return document.readyState") == "complete")
+
+        # ランダムな追加時間を計算
+        wait_time = random.uniform(time_sleep, time_sleep + buffer_time)
+        logger.debug(f"ページロード後、追加で{wait_time:.2f}秒待機します")
+
+        # 単純にsleepを使用する（より効率的）
+        time.sleep(wait_time)
+    except TimeoutException:
+        logger.warning(f"ページの読み込みが{base_wait}秒以内に完了しませんでした")
+    except Exception as e:
+        logger.error(f"待機中にエラーが発生しました: {e}")
 
 
 def driver_start(url, heroku_mode=False, verbose=False):
@@ -175,7 +185,7 @@ def driver_start(url, heroku_mode=False, verbose=False):
     logger.info("ChromeDriver起動開始")
 
     options = webdriver.ChromeOptions()
-    if heroku_mode == "True":
+    if heroku_mode == True:
         if verbose:
             print("Heroku環境の設定でChromeDriverを起動します。")
         logger.info("Heroku環境の設定でChromeDriverを起動します。")

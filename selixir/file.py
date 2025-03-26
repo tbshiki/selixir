@@ -1,5 +1,9 @@
 import os
 import time
+import logging
+
+# ロガーの取得
+logger = logging.getLogger("selixir")
 
 
 def get_latest_file_path(directory):
@@ -34,7 +38,7 @@ def get_latest_file_path(directory):
     except PermissionError as e:
         raise PermissionError(f"Permission denied accessing directory: {directory}") from e
     except Exception as e:
-        print(f"Unexpected error getting latest file in {directory}: {e}")
+        logger.error(f"Unexpected error getting latest file in {directory}: {e}")
         return None
 
 
