@@ -25,8 +25,8 @@ from selenium.webdriver.common.by import By
 # デバッグモードを有効化するとログが表示される
 selixir.debug(True)
 
-# ChromeDriverを起動、verbose=Trueで処理状況を標準出力に表示
-driver = selixir.driver_start("https://example.com", verbose=True)
+# ChromeDriverを起動
+driver = selixir.driver_start("https://example.com")
 
 # 要素までスクロール
 element = driver.find_element(By.ID, "target-element")
@@ -67,11 +67,14 @@ selixir_logger.setLevel(logging.DEBUG)  # ログレベルを設定
 ### ドライバー管理
 
 ```python
-# ドライバー起動時に処理状況を標準出力に表示
-driver = selixir.driver_start(url, verbose=True)
+# ドライバー操作中にログを表示する
+selixir.debug(True)
+
+# ドライバーを起動
+driver = selixir.driver_start(url)
 
 # Heroku環境用の設定でドライバー起動
-driver = selixir.driver_start(url, heroku_mode=True, verbose=True)
+driver = selixir.driver_start(url, heroku_mode=True)
 ```
 
 ### タブ操作

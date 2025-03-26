@@ -58,10 +58,10 @@ def perform_control_click(driver, element):
 
     try:
         WebDriverWait(driver, 30).until(lambda d: len(d.window_handles) > handles_before_click)
-        logger.debug(f"新しいタブが開かれました ({len(driver.window_handles)} 個のタブ)")
+        logger.debug(f"New tab opened ({len(driver.window_handles)} tabs total)")
         return True
     except TimeoutException:
-        logger.warning("新しいタブが30秒以内に開かれませんでした")
+        logger.warning("New tab was not opened within 30 seconds")
         return False
 
 
@@ -78,7 +78,7 @@ def switch_to_rightmost_tab(driver, element):
     """
     if perform_control_click(driver, element):
         driver.switch_to.window(driver.window_handles[-1])
-        logger.debug(f"最も右のタブ({driver.window_handles[-1]})に切り替えました")
+        logger.debug(f"Switched to the rightmost tab ({driver.window_handles[-1]})")
         return True
     return False
 
@@ -171,42 +171,40 @@ def wait_with_buffer(driver, time_sleep=1, buffer_time=0.5, base_wait=10):
 
         # Calculate random additional wait time
         wait_time = random.uniform(time_sleep, time_sleep + buffer_time)
-        logger.debug(f"ページロード後、追加で{wait_time:.2f}秒待機します")
+        logger.debug(f"Waiting for additional {wait_time:.2f} seconds after page load")
 
         # Simply use sleep (more efficient than WebDriverWait for this purpose)
         time.sleep(wait_time)
     except TimeoutException:
-        logger.warning(f"ページの読み込みが{base_wait}秒以内に完了しませんでした")
+        logger.warning(f"Page did not finish loading within {base_wait} seconds")
     except Exception as e:
-        logger.error(f"待機中にエラーが発生しました: {e}")
+        logger.error(f"Error during wait: {e}")
 
 
-def driver_start(url, heroku_mode=False, verbose=False):
+def driver_start(url, heroku_mode=False):
     """
     Start a Chrome WebDriver and load the specified URL.
 
     Handles common setup options and provides fallback mechanisms if the standard
     WebDriver initialization fails.
 
+    To see detailed logs, enable debug mode by calling selixir.debug(True) before using this function.
+
     Args:
         url: URL to load
         heroku_mode: Whether to use settings optimized for Heroku environment
-        verbose: Whether to output status messages to stdout
 
     Returns:
         Initialized WebDriver instance
     """
 
-    if verbose:
-        print("ChromeDriver起動開始")
-
-    # Log the information to the logger as well
-    logger.info("ChromeDriver起動開始")
+    logger.info("Starting ChromeDriver")
 
     options = webdriver.ChromeOptions()
-    if heroku_mode:
-        if verbose:
-            print("Starting ChromeDriver with Heroku environment settings.")
+    # Handle both boolean True and string 'True'/'true'
+    is_heroku_mode = heroku_mode is True or (isinstance(heroku_mode, str) and heroku_mode.lower() == "true")
+
+    if is_heroku_mode:
         logger.info("Starting ChromeDriver with Heroku environment settings.")
         options.add_argument("--headless=new")
         options.add_argument("--disable-gpu")
@@ -238,24 +236,16 @@ def driver_start(url, heroku_mode=False, verbose=False):
 
     try:
         driver = webdriver.Chrome(options=options)
-        if verbose:
-            print("ChromeDriver起動(Selenium)")
-        logger.info("ChromeDriver起動(Selenium)")
+        logger.info("ChromeDriver started (Selenium)")
     except Exception as e:
-        if verbose:
-            print(f"ChromeDriver起動エラー: {e}")
-        logger.error(f"ChromeDriver起動エラー: {e}")
+        logger.error(f"ChromeDriver start error: {e}")
         service = Service(executable_path=ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
-        if verbose:
-            print("ChromeDriver起動(ChromeDriverManager)")
-        logger.info("ChromeDriver起動(ChromeDriverManager)")
+        logger.info("ChromeDriver started (ChromeDriverManager)")
 
     driver.maximize_window()
     wait_with_buffer(driver, 3, 1)
-    if verbose:
-        print("ChromeDriver起動完了")
-    logger.info("ChromeDriver起動完了")
+    logger.info("ChromeDriver initialization complete")
 
     driver.get(url)
     wait_with_buffer(driver, 3, 1)

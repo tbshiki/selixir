@@ -25,8 +25,8 @@ from selenium.webdriver.common.by import By
 # Enable debug mode to see logs
 selixir.debug(True)
 
-# Start ChromeDriver, verbose=True to display processing status
-driver = selixir.driver_start("https://example.com", verbose=True)
+# Start ChromeDriver
+driver = selixir.driver_start("https://example.com")
 
 # Scroll to an element
 element = driver.find_element(By.ID, "target-element")
@@ -67,11 +67,14 @@ selixir_logger.setLevel(logging.DEBUG)  # Set log level
 ### Driver Management
 
 ```python
-# Display processing status when starting the driver
-driver = selixir.driver_start(url, verbose=True)
+# Display logs during driver operations
+selixir.debug(True)
+
+# Start the driver
+driver = selixir.driver_start(url)
 
 # Start the driver with Heroku environment settings
-driver = selixir.driver_start(url, heroku_mode=True, verbose=True)
+driver = selixir.driver_start(url, heroku_mode=True)
 ```
 
 ### Tab Operations
