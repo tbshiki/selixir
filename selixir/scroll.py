@@ -52,15 +52,20 @@ def scroll_to_target(driver, target, top_offset=100, time_sleep=1):
         WebDriverWait(driver, time_sleep).until(lambda d: element.is_displayed())
 
     except Exception as e:
-        # Element not found, fallback to scroll_to_element_by_js using XPath
-        if target:
-            scroll_to_element_by_js(driver, element, top_offset)
-        else:
-            print("Cannot scroll to element")
+        # If ActionChains fails, fallback to JavaScript scrolling
+        print(f"ActionChains scroll failed: {e}. Falling back to JavaScript scrolling.")
+        try:
+            if isinstance(element, WebElement):
+                scroll_to_element_by_js(driver, element, top_offset)
+            else:
+                print("Cannot scroll to element: invalid element reference")
+        except Exception as js_error:
+            print(f"JavaScript scrolling also failed: {js_error}")
 
 
 ##
-# Anything below this is not recommended : It's a legacy function
+# Anything below this is not recommended: These are legacy functions.
+# Use scroll_to_target() instead which provides more robust scrolling behavior.
 ##
 def scroll_to_xpath(driver, element_xpath, time_sleep=1):
     """

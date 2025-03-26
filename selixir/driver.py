@@ -132,19 +132,34 @@ def close_other_tabs(driver, current_tab_handle=None):
     return current_tab_handle
 
 
-import random
-import time
-
 def wait_with_buffer(driver, time_sleep=1, buffer_time=0.5, base_wait=10):
-    WebDriverWait(driver, base_wait).until(
-        lambda d: d.execute_script("return document.readyState") == "complete"
-    )
+    """
+    Wait for the page to load completely and then wait for a specified time with random buffer.
+
+    Args:
+        driver: The WebDriver instance controlling the browser.
+        time_sleep: The minimum time to wait after page load.
+        buffer_time: Additional random time to add (up to this value).
+        base_wait: Maximum time to wait for page to reach 'complete' state.
+    """
+    WebDriverWait(driver, base_wait).until(lambda d: d.execute_script("return document.readyState") == "complete")
     wait_time = random.uniform(time_sleep, time_sleep + buffer_time)
     start = time.time()
     WebDriverWait(driver, wait_time).until(lambda d: time.time() - start > wait_time)
 
 
 def driver_start(url, heroku_mode=False, logger=None):
+    """
+    Start a Chrome WebDriver instance with specified options.
+
+    Args:
+        url: The URL to navigate to after starting the driver.
+        heroku_mode: Whether to configure the driver for a Heroku environment.
+        logger: Optional logger instance for logging information.
+
+    Returns:
+        The initialized WebDriver instance.
+    """
     if logger:
         logger.info("ChromeDriver起動開始")
 

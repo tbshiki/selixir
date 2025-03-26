@@ -10,11 +10,31 @@ def get_latest_file_path(directory):
         directory: The directory to search in.
 
     Returns:
-        The path of the latest file, or None if no files exist.
+        The path of the latest file, or None if no files exist or an error occurs.
+
+    Raises:
+        FileNotFoundError: If the directory does not exist.
+        PermissionError: If there is a permission issue accessing the directory.
     """
+    if not os.path.exists(directory):
+        raise FileNotFoundError(f"Directory does not exist: {directory}")
+
+    if not os.path.isdir(directory):
+        raise NotADirectoryError(f"Path is not a directory: {directory}")
+
     try:
-        return max((os.path.join(directory, f) for f in os.listdir(directory) if not f.endswith((".crdownload", ".tmp"))), key=os.path.getctime)
+        files = [os.path.join(directory, f) for f in os.listdir(directory) if not f.endswith((".crdownload", ".tmp")) and os.path.isfile(os.path.join(directory, f))]
+
+        if not files:
+            return None
+
+        return max(files, key=os.path.getctime)
     except ValueError:
+        return None
+    except PermissionError as e:
+        raise PermissionError(f"Permission denied accessing directory: {directory}") from e
+    except Exception as e:
+        print(f"Unexpected error getting latest file in {directory}: {e}")
         return None
 
 
