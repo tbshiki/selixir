@@ -2,7 +2,7 @@ import os
 import time
 import logging
 
-# ロガーの取得
+# Get the logger
 logger = logging.getLogger("selixir")
 
 

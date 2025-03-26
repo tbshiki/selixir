@@ -6,12 +6,13 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 import logging
 
-# ロガーの取得
+# Get the logger
 logger = logging.getLogger("selixir")
 
 
 def scroll_to_element_by_js(driver, element, top_offset=100):
     """
+
     Scrolls to the specified web element, ensuring it's positioned at a specified offset from the top.
 
     Args:
@@ -28,6 +29,7 @@ def scroll_to_element_by_js(driver, element, top_offset=100):
 
 def scroll_to_target(driver, target, top_offset=100, time_sleep=1):
     """
+
     Scrolls the browser window to the specified target, which can be a web element or an XPath string.
     Optionally positions the target at a specified offset from the top and waits for a specified time.
 
@@ -65,6 +67,3 @@ def scroll_to_target(driver, target, top_offset=100, time_sleep=1):
                 logger.error("Cannot scroll to element: invalid element reference")
         except Exception as js_error:
             logger.error(f"JavaScript scrolling also failed: {js_error}")
-
-
-

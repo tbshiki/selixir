@@ -1,122 +1,118 @@
 # Selixir
 
-SelixirはSelenium WebDriverを使いやすくするための軽量ラッパーライブラリです。
-ブラウザの自動操作をより簡単かつ堅牢にするための便利なユーティリティ関数を提供します。
+Selixir is a lightweight wrapper library for Selenium WebDriver.
+It provides useful utility functions to make browser automation easier and more robust.
 
-## 機能
+## Features
 
-- **ドライバー管理**: ChromeDriverの起動と設定を簡単に行えます
-- **クリック操作制御**: 新しいタブでのリンクオープンやタブの管理を行えます
-- **スクロール操作**: 様々な方法で要素までスクロールできます
-- **ファイル操作**: ダウンロードファイルの監視などに便利な関数を提供しています
+- **Driver Management**: Easily start and configure ChromeDriver
+- **Click Operation Control**: Manage link opening in new tabs and tab handling
+- **Scroll Operations**: Scroll to elements in various ways
+- **File Operations**: Provides useful functions for monitoring downloaded files
 
-## インストール
+## Installation
 
 ```bash
 pip install selixir
 ```
 
-## 簡単な使い方
+## Quick Start
 
 ```python
 import selixir
 from selenium.webdriver.common.by import By
 
-# デバッグモードを有効化するとログが表示される
+# Enable debug mode to see logs
 selixir.debug(True)
 
-# ChromeDriverを起動、verbose=Trueで処理状況を標準出力に表示
+# Start ChromeDriver, verbose=True to display processing status
 driver = selixir.driver_start("https://example.com", verbose=True)
 
-# 要素までスクロール
+# Scroll to an element
 element = driver.find_element(By.ID, "target-element")
 selixir.scroll_to_target(driver, element)
 
-# 新しいタブでリンクを開く
-link_element = driver.find_element(By.XPATH, "//a[contains(text(), 'リンク')]")
+# Open a link in a new tab
+link_element = driver.find_element(By.XPATH, "//a[contains(text(), 'Link')]")
 if selixir.switch_to_new_tab(driver, link_element):
-    print("新しいタブに切り替わりました")
+    print("Switched to a new tab")
 
-# ダウンロードディレクトリの最新ファイルを取得
+# Get the latest file in the download directory
 download_dir = "/path/to/downloads"
 latest_file = selixir.get_latest_file_path(download_dir)
 ```
 
-## 主な機能
+## Main Features
 
-### ログ出力のカスタマイズ
+### Customizing Log Output
 
 ```python
-# デバッグモードを有効にするとログが標準出力に表示される
-selixir.debug(True)  # 有効化
-selixir.debug(False) # 無効化
+# When debug mode is enabled, logs are displayed on standard output
+selixir.debug(True)  # Enable
+selixir.debug(False) # Disable
 
-# 独自のロガー設定を行う場合は以下のように設定可能
+# If you want to configure your own logger:
 import logging
 
-# ロガーの取得
+# Get the logger
 selixir_logger = logging.getLogger("selixir")
 
-# 独自のログハンドラーを設定
+# Configure your own log handler
 file_handler = logging.FileHandler("selixir.log")
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 selixir_logger.addHandler(file_handler)
-selixir_logger.setLevel(logging.DEBUG)  # ログレベルを設定
+selixir_logger.setLevel(logging.DEBUG)  # Set log level
 ```
 
-### ドライバー管理
+### Driver Management
 
 ```python
-# ドライバー起動時に処理状況を標準出力に表示
+# Display processing status when starting the driver
 driver = selixir.driver_start(url, verbose=True)
 
-# Heroku環境用の設定でドライバー起動
+# Start the driver with Heroku environment settings
 driver = selixir.driver_start(url, heroku_mode=True, verbose=True)
 ```
 
-### タブ操作
+### Tab Operations
 
 ```python
-# 新しいタブを開く
+# Open a new tab
 selixir.open_new_tab(driver, "https://example.com")
 
-# 現在のタブ以外をすべて閉じる
+# Close all tabs except the current one
 selixir.close_other_tabs(driver)
 
-# Control+クリックでリンクを新しいタブで開く
+# Control+click a link to open in a new tab
 element = driver.find_element(By.XPATH, "//a[@href='https://example.com']")
 selixir.perform_control_click(driver, element)
 
-# Control+クリックして新規タブに切り替え
+# Control+click and switch to the new tab
 success = selixir.switch_to_new_tab(driver, element)
 if success:
-    print('新しいタブに切り替わりました')
+    print('Switched to a new tab')
 ```
 
-### スクロール操作
+### Scroll Operations
 
 ```python
-# JavaScriptを使用して要素へスクロール
+# Scroll to an element using JavaScript
 selixir.scroll_to_element_by_js(driver, element)
 
-# 様々な方法を組み合わせた堅牢なスクロール
+# Robust scrolling combining various methods
 selixir.scroll_to_target(driver, element_or_xpath)
 ```
 
-### ファイル操作
+### File Operations
 
 ```python
-# ディレクトリ内の最新ファイルを取得
+# Get the latest file in a directory
 latest_file = selixir.get_latest_file_path(download_dir)
 
-# 新しいファイルが作成されるのを待つ
+# Wait for a new file to be created
 new_file = selixir.wait_for_new_file(download_dir, timeout_seconds=60)
 ```
 
-## 貢献
+## Contributing
 
-問題の報告やプルリクエストは GitHub リポジトリで受け付けています。
-
-## ライセンス
-
-MIT
+Issues and pull requests are welcome on the GitHub repository.

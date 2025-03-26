@@ -3,7 +3,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 
 import random
@@ -11,13 +11,20 @@ import time
 import platform
 import logging
 
-# ロガーの設定
+# Configure the logger
 logger = logging.getLogger("selixir")
 
 
 # デバッグモードが有効ならストリームハンドラーも追加
 def debug(enable=False):
-    """デバッグモードを有効にする"""
+    """
+    Enable or disable debug mode for selixir.
+
+    When debug mode is enabled, log messages will be output to the console.
+
+    Args:
+        enable (bool): True to enable debug mode, False to disable
+    """
     if enable:
         handler = logging.StreamHandler()
         handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
@@ -31,14 +38,15 @@ def debug(enable=False):
 
 
 def perform_control_click(driver, element):
-    """Control+クリックで新しいタブを開く
+    """
+    Perform a Control+click (or Command+click on Mac) on an element to open a link in a new tab.
 
     Args:
-        driver: WebDriverインスタンス
-        element: クリックする要素
+        driver: WebDriver instance
+        element: The element to click on
 
     Returns:
-        bool: 新しいタブが開いた場合はTrue、開かなかった場合はFalse
+        bool: True if a new tab was opened, False otherwise
     """
     handles_before_click = len(driver.window_handles)
 
@@ -58,14 +66,15 @@ def perform_control_click(driver, element):
 
 
 def switch_to_rightmost_tab(driver, element):
-    """リンクをControl+クリックし、最も右のタブに切り替える
+    """
+    Control+click on a link and switch to the rightmost (newest) tab.
 
     Args:
-        driver: WebDriverインスタンス
-        element: クリックする要素
+        driver: WebDriver instance
+        element: The element to click on
 
     Returns:
-        bool: 成功した場合はTrue、失敗した場合はFalse
+        bool: True if successful, False otherwise
     """
     if perform_control_click(driver, element):
         driver.switch_to.window(driver.window_handles[-1])
@@ -75,14 +84,16 @@ def switch_to_rightmost_tab(driver, element):
 
 
 def switch_to_new_tab(driver, element):
-    """リンクをControl+クリックし、新規に開いたタブに切り替える
+    """
+    Control+click on a link and switch to the newly opened tab.
+    This function identifies the new tab by comparing handle lists before and after clicking.
 
     Args:
-        driver: WebDriverインスタンス
-        element: クリックする要素
+        driver: WebDriver instance
+        element: The element to click on
 
     Returns:
-        bool: 成功した場合はTrue、失敗した場合はFalse
+        bool: True if successful, False otherwise
     """
     handle_list_before = driver.window_handles
     if perform_control_click(driver, element):
@@ -95,15 +106,16 @@ def switch_to_new_tab(driver, element):
 
 
 def open_new_tab(driver, url, time_sleep=1):
-    """新しいタブを開いてURLを読み込み、そのタブに切り替える
+    """
+    Open a new tab with the specified URL and switch to it.
 
     Args:
-        driver: WebDriverインスタンス
-        url: 開くページのURL
-        time_sleep: タブが開くのを待つ時間（秒）
+        driver: WebDriver instance
+        url: URL to load in the new tab
+        time_sleep: Time to wait for the tab to open (seconds)
 
     Returns:
-        list: 作成された新しいウィンドウハンドルのリスト
+        list: List of newly created window handles
     """
     handles_before = driver.window_handles
     driver.execute_script(f"window.open('{url}');")
@@ -119,14 +131,15 @@ def open_new_tab(driver, url, time_sleep=1):
 
 
 def close_other_tabs(driver, current_tab_handle=None):
-    """現在のタブ以外のすべてのタブを閉じる
+    """
+    Close all tabs except the current one (or specified tab).
 
     Args:
-        driver: WebDriverインスタンス
-        current_tab_handle: 開いたままにするタブのハンドル（省略時は現在のタブ）
+        driver: WebDriver instance
+        current_tab_handle: Handle of the tab to keep open (defaults to current tab)
 
     Returns:
-        str: 開いたままのタブのハンドル
+        str: Handle of the tab that remained open
     """
     if current_tab_handle is None:
         current_tab_handle = driver.current_window_handle
@@ -142,23 +155,25 @@ def close_other_tabs(driver, current_tab_handle=None):
 
 
 def wait_with_buffer(driver, time_sleep=1, buffer_time=0.5, base_wait=10):
-    """ページの読み込み完了を待ち、さらにランダムな時間を追加で待機する
+    """
+    Wait for the page to finish loading, then add a random buffer wait time.
+    This helps prevent detection of automated browsing patterns by adding variability.
 
     Args:
-        driver: WebDriverインスタンス
-        time_sleep: 最低待機時間（秒）
-        buffer_time: 追加でランダムに待機する最大時間（秒）
-        base_wait: ページ読み込み完了を待つ最大時間（秒）
+        driver: WebDriver instance
+        time_sleep: Minimum wait time (seconds)
+        buffer_time: Maximum additional random wait time (seconds)
+        base_wait: Maximum time to wait for page loading completion (seconds)
     """
     try:
-        # ページの読み込み完了を待つ
+        # Wait for the page to be fully loaded
         WebDriverWait(driver, base_wait).until(lambda d: d.execute_script("return document.readyState") == "complete")
 
-        # ランダムな追加時間を計算
+        # Calculate random additional wait time
         wait_time = random.uniform(time_sleep, time_sleep + buffer_time)
         logger.debug(f"ページロード後、追加で{wait_time:.2f}秒待機します")
 
-        # 単純にsleepを使用する（より効率的）
+        # Simply use sleep (more efficient than WebDriverWait for this purpose)
         time.sleep(wait_time)
     except TimeoutException:
         logger.warning(f"ページの読み込みが{base_wait}秒以内に完了しませんでした")
@@ -167,28 +182,32 @@ def wait_with_buffer(driver, time_sleep=1, buffer_time=0.5, base_wait=10):
 
 
 def driver_start(url, heroku_mode=False, verbose=False):
-    """クロームドライバーを起動して指定のURLを開く
+    """
+    Start a Chrome WebDriver and load the specified URL.
+
+    Handles common setup options and provides fallback mechanisms if the standard
+    WebDriver initialization fails.
 
     Args:
-        url: 読み込むURL
-        heroku_mode: Heroku環境用の設定を使用するかどうか
-        verbose: 処理状況を標準出力に表示するかどうか
+        url: URL to load
+        heroku_mode: Whether to use settings optimized for Heroku environment
+        verbose: Whether to output status messages to stdout
 
     Returns:
-        初期化済みのWebDriverインスタンス
+        Initialized WebDriver instance
     """
 
     if verbose:
         print("ChromeDriver起動開始")
 
-    # ロガーにも情報を記録
+    # Log the information to the logger as well
     logger.info("ChromeDriver起動開始")
 
     options = webdriver.ChromeOptions()
-    if heroku_mode == True:
+    if heroku_mode:
         if verbose:
-            print("Heroku環境の設定でChromeDriverを起動します。")
-        logger.info("Heroku環境の設定でChromeDriverを起動します。")
+            print("Starting ChromeDriver with Heroku environment settings.")
+        logger.info("Starting ChromeDriver with Heroku environment settings.")
         options.add_argument("--headless=new")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
