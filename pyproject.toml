@@ -1,0 +1,31 @@
+[project]
+name = "selixir"
+version = "0.1"
+description = "A helpful utility wrapper for Selenium WebDriver."
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    { name = "tbshiki", email = "info@tbshiki.com" }
+]
+keywords = ["selenium", "automation", "webdriver", "operation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "selenium>=4.20.0"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+"Homepage" = "https://github.com/tbshiki/selixir"
+"Source" = "https://github.com/tbshiki/selixir"
+"Bug Tracker" = "https://github.com/tbshiki/selixir/issues"
