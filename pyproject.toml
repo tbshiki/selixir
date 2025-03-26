@@ -18,7 +18,8 @@ classifiers = [
     "Operating System :: OS Independent"
 ]
 dependencies = [
-    "selenium>=4.20.0"
+    "selenium>=4.20.0",
+    "webdriver-manager>=4.0.2"
 ]
 
 [build-system]
