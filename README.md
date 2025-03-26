@@ -114,6 +114,11 @@ latest_file = selixir.get_latest_file_path(download_dir)
 
 # Wait for a new file to be created
 new_file = selixir.wait_for_new_file(download_dir, timeout_seconds=60)
+
+# Track download completion when you know files before download started
+before_files = set(os.listdir(download_dir))
+# Perform your download operation here...
+completed_file = selixir.wait_for_download_completion(download_dir, before_files, timeout=60)
 ```
 
 ## Contributing

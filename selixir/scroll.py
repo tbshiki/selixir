@@ -1,4 +1,3 @@
-from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,7 +11,6 @@ logger = logging.getLogger("selixir")
 
 def scroll_to_element_by_js(driver, element, top_offset=100):
     """
-
     Scrolls to the specified web element, ensuring it's positioned at a specified offset from the top.
 
     Args:
@@ -29,7 +27,6 @@ def scroll_to_element_by_js(driver, element, top_offset=100):
 
 def scroll_to_target(driver, target, top_offset=100, time_sleep=1):
     """
-
     Scrolls the browser window to the specified target, which can be a web element or an XPath string.
     Optionally positions the target at a specified offset from the top and waits for a specified time.
 
