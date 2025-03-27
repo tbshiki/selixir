@@ -4,120 +4,157 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.remote.webelement import WebElement
 from webdriver_manager.chrome import ChromeDriverManager
 
 import random
 import time
 import platform
 import logging
+from typing import List, Optional, Union, Literal, Any, Callable, TypeVar, cast
 
-logger = logging.getLogger(__name__)
+# Configure the logger
+logger = logging.getLogger("selixir")
+
+# Type variable for WebDriver
+Driver = TypeVar('Driver', bound='webdriver.Chrome')
 
 
-class ClickControl:
+def debug(enable: bool = False) -> None:
     """
-    Control-click action on a web element, handling new tabs and window switches.
-    """
+    Enable or disable debug mode for selixir.
 
-    def __init__(self, driver, element):
-        """
-        Initializes the ClickControl instance.
-        Args:
-            driver: WebDriver instance.
-            element: The web element to be clicked.
-        """
-        self._perform_click(driver, element)
-
-    def _perform_click(self, driver, element):
-        """
-        Perform a control-click on the specified element and wait for a new tab to open.
-
-        This method scrolls the element into view, performs a control-click (Command-click on macOS,
-        Control-click on other systems), and waits for a new browser tab to open.
-
-        Args:
-            driver: The WebDriver instance controlling the browser.
-            element: The web element to be clicked.
-
-        Raises:
-            TimeoutException: If no new tab is opened within 30 seconds.
-        """
-
-        handles_before_click = len(driver.window_handles)  # Get the number of handles before the click
-
-        driver.execute_script("arguments[0].scrollIntoView();", element)  # Scroll the element into view to avoid errors
-
-        # Setup action chains for the click
-        actions = ActionChains(driver)
-        control_key = Keys.COMMAND if platform.system() == "Darwin" else Keys.CONTROL
-        actions.key_down(control_key).click(element).key_up(control_key).perform()
-
-        # Wait for a new tab to open (up to 30 seconds)
-        try:
-            WebDriverWait(driver, 30).until(lambda d: len(d.window_handles) > handles_before_click)
-        except TimeoutException:
-            print("Timeout occurred: No new tab was opened.")
-            return
-
-    @staticmethod
-    def switch_to_rightmost(driver, element):
-        """
-        Control-clicks on the given element and switches to the rightmost tab.
-        Args:
-            driver: WebDriver instance.
-            element: The web element to be clicked.
-        """
-        ClickControl(driver, element)
-        driver.switch_to.window(driver.window_handles[-1])
-
-    @staticmethod
-    def switch_to_new_tab(driver, element):
-        """
-        Control-clicks on the given element and switches to the newly opened tab.
-        Args:
-            driver: WebDriver instance.
-            element: The web element to be clicked.
-        """
-        handle_list_before = driver.window_handles
-        ClickControl(driver, element)
-
-        handle_list_after = driver.window_handles
-        handle_list_new = list(set(handle_list_after) - set(handle_list_before))
-        driver.switch_to.window(handle_list_new[0])
-
-
-def open_new_tab(driver, url, time_sleep=1):
-    """
-    Opens a new tab with the specified URL and switches the driver's context to this new tab.
+    When debug mode is enabled, log messages will be output to the console.
 
     Args:
-        driver: The WebDriver instance controlling the browser.
-        url: The URL to be opened in the new tab.
-        time_sleep: Optional; The time to wait for the new tab to open.
+        enable: True to enable debug mode, False to disable
+    """
+    if enable:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.WARNING)
+        for handler in logger.handlers:
+            if isinstance(handler, logging.StreamHandler) and not isinstance(handler, logging.NullHandler):
+                logger.removeHandler(handler)
+
+
+def perform_control_click(driver: webdriver.Chrome, element: WebElement) -> bool:
+    """
+    Perform a Control+click (or Command+click on Mac) on an element to open a link in a new tab.
+
+    Args:
+        driver: WebDriver instance
+        element: The element to click on
 
     Returns:
-        A list of new window handle(s) created.
+        True if a new tab was opened, False otherwise
+    """
+    handles_before_click = len(driver.window_handles)
+
+    driver.execute_script("arguments[0].scrollIntoView();", element)
+
+    actions = ActionChains(driver)
+    control_key = Keys.COMMAND if platform.system() == "Darwin" else Keys.CONTROL
+    actions.key_down(control_key).click(element).key_up(control_key).perform()
+
+    try:
+        WebDriverWait(driver, 30).until(lambda d: len(d.window_handles) > handles_before_click)
+        logger.debug(f"New tab opened ({len(driver.window_handles)} tabs total)")
+        return True
+    except TimeoutException:
+        logger.warning("New tab was not opened within 30 seconds")
+        return False
+
+
+def switch_to_rightmost_tab(driver: webdriver.Chrome, element: WebElement) -> bool:
+    """
+    Control+click on a link and switch to the rightmost (newest) tab.
+
+    Args:
+        driver: WebDriver instance
+        element: The element to click on
+
+    Returns:
+        True if successful, False otherwise
+    """
+    if perform_control_click(driver, element):
+        driver.switch_to.window(driver.window_handles[-1])
+        logger.debug(f"Switched to the rightmost tab ({driver.window_handles[-1]})")
+        return True
+    return False
+
+
+def switch_to_new_tab(driver: webdriver.Chrome, element: WebElement) -> bool:
+    """
+    Control+click on a link and switch to the newly opened tab.
+    This function identifies the new tab by comparing handle lists before and after clicking.
+
+    Args:
+        driver: WebDriver instance
+        element: The element to click on
+
+    Returns:
+        True if successful, False otherwise
+    """
+    handle_list_before = driver.window_handles
+    if perform_control_click(driver, element):
+        handle_list_after = driver.window_handles
+        handle_list_new = list(set(handle_list_after) - set(handle_list_before))
+        if handle_list_new:
+            driver.switch_to.window(handle_list_new[0])
+            return True
+    return False
+
+
+def open_new_tab(driver: webdriver.Chrome, url: str, timeout: float = 10) -> List[str]:
+    """
+    Open a new tab with the specified URL and switch to it.
+
+    Args:
+        driver: WebDriver instance
+        url: URL to load in the new tab
+        timeout: Maximum time to wait for the new tab to open (seconds)
+
+    Returns:
+        List of newly created window handles
     """
     handles_before = driver.window_handles
     driver.execute_script(f"window.open('{url}');")
 
-    # Wait for the new tab to open
-    WebDriverWait(driver, time_sleep).until(lambda d: len(d.window_handles) > len(handles_before))
+    try:
+        # Wait for the new tab to open with proper WebDriverWait usage
+        # This waits up to 'timeout' seconds for the condition to be true
+        WebDriverWait(driver, timeout).until(lambda d: len(d.window_handles) > len(handles_before))
 
-    handles_after = driver.window_handles
-    new_handles = list(set(handles_after) - set(handles_before))
-    driver.switch_to.window(new_handles[0])
+        handles_after = driver.window_handles
+        new_handles = list(set(handles_after) - set(handles_before))
 
-    return new_handles
+        if new_handles:
+            driver.switch_to.window(new_handles[0])
+            logger.debug(f"Switched to new tab with handle {new_handles[0]}")
+            return new_handles
+        else:
+            logger.warning("No new tab was detected after script execution")
+            return []
+
+    except TimeoutException:
+        logger.warning(f"Timed out waiting for new tab to open (timeout: {timeout}s)")
+        return []
 
 
-def close_other_tabs(driver, current_tab_handle=None):
+def close_other_tabs(driver: webdriver.Chrome, current_tab_handle: Optional[str] = None) -> str:
     """
-    Closes all browser tabs except for the current tab and switches back to the current tab.
+    Close all tabs except the current one (or specified tab).
 
     Args:
-        driver: The WebDriver instance controlling the browser.
-        current_tab_handle: The handle of the current tab that should remain open.
+        driver: WebDriver instance
+        current_tab_handle: Handle of the tab to keep open (defaults to current tab)
+
+    Returns:
+        Handle of the tab that remained open
     """
     if current_tab_handle is None:
         current_tab_handle = driver.current_window_handle
@@ -132,26 +169,58 @@ def close_other_tabs(driver, current_tab_handle=None):
     return current_tab_handle
 
 
-import random
-import time
+def wait_with_buffer(driver: webdriver.Chrome, time_sleep: float = 1, buffer_time: float = 0.5, base_wait: int = 10) -> None:
+    """
+    Wait for the page to finish loading, then add a random buffer wait time.
+    This helps prevent detection of automated browsing patterns by adding variability.
 
-def wait_with_buffer(driver, time_sleep=1, buffer_time=0.5, base_wait=10):
-    WebDriverWait(driver, base_wait).until(
-        lambda d: d.execute_script("return document.readyState") == "complete"
-    )
-    wait_time = random.uniform(time_sleep, time_sleep + buffer_time)
-    start = time.time()
-    WebDriverWait(driver, wait_time).until(lambda d: time.time() - start > wait_time)
+    Args:
+        driver: WebDriver instance
+        time_sleep: Minimum wait time (seconds)
+        buffer_time: Maximum additional random wait time (seconds)
+        base_wait: Maximum time to wait for page loading completion (seconds)
+    """
+    try:
+        # Wait for the page to be fully loaded
+        WebDriverWait(driver, base_wait).until(lambda d: d.execute_script("return document.readyState") == "complete")
+
+        # Calculate random additional wait time
+        wait_time = random.uniform(time_sleep, time_sleep + buffer_time)
+        logger.debug(f"Waiting for additional {wait_time:.2f} seconds after page load")
+
+        # Simply use sleep (more efficient than WebDriverWait for this purpose)
+        time.sleep(wait_time)
+    except TimeoutException:
+        logger.warning(f"Page did not finish loading within {base_wait} seconds")
+    except Exception as e:
+        logger.error(f"Error during wait: {e}")
 
 
-def driver_start(url, heroku_mode=False, logger=None):
-    if logger:
-        logger.info("ChromeDriver起動開始")
+def driver_start(url: str, heroku_mode: Union[bool, str] = False) -> webdriver.Chrome:
+    """
+    Start a Chrome WebDriver and load the specified URL.
+
+    Handles common setup options and provides fallback mechanisms if the standard
+    WebDriver initialization fails.
+
+    To see detailed logs, enable debug mode by calling selixir.debug(True) before using this function.
+
+    Args:
+        url: URL to load
+        heroku_mode: Whether to use settings optimized for Heroku environment
+
+    Returns:
+        Initialized WebDriver instance
+    """
+
+    logger.info("Starting ChromeDriver")
 
     options = webdriver.ChromeOptions()
-    if heroku_mode == "True":
-        if logger:
-            logger.info("Heroku環境の設定でChromeDriverを起動します。")
+    # Handle both boolean True and string 'True'/'true'
+    is_heroku_mode = heroku_mode is True or (isinstance(heroku_mode, str) and heroku_mode.lower() == "true")
+
+    if is_heroku_mode:
+        logger.info("Starting ChromeDriver with Heroku environment settings.")
         options.add_argument("--headless=new")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
@@ -182,20 +251,16 @@ def driver_start(url, heroku_mode=False, logger=None):
 
     try:
         driver = webdriver.Chrome(options=options)
-        if logger:
-            logger.info("ChromeDriver起動(Selenium)")
+        logger.info("ChromeDriver started (Selenium)")
     except Exception as e:
-        if logger:
-            logger.error(f"ChromeDriver起動1エラー: {e}")
+        logger.error(f"ChromeDriver start error: {e}")
         service = Service(executable_path=ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
-        if logger:
-            logger.info("ChromeDriver起動(ChromeDriverManager)")
+        logger.info("ChromeDriver started (ChromeDriverManager)")
 
     driver.maximize_window()
     wait_with_buffer(driver, 3, 1)
-    if logger:
-        logger.info("ChromeDriver起動完了")
+    logger.info("ChromeDriver initialization complete")
 
     driver.get(url)
     wait_with_buffer(driver, 3, 1)
