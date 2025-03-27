@@ -4,26 +4,30 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.remote.webelement import WebElement
 from webdriver_manager.chrome import ChromeDriverManager
 
 import random
 import time
 import platform
 import logging
+from typing import List, Optional, Union, Literal, Any, Callable, TypeVar, cast
 
 # Configure the logger
 logger = logging.getLogger("selixir")
 
+# Type variable for WebDriver
+Driver = TypeVar('Driver', bound='webdriver.Chrome')
 
-# デバッグモードが有効ならストリームハンドラーも追加
-def debug(enable=False):
+
+def debug(enable: bool = False) -> None:
     """
     Enable or disable debug mode for selixir.
 
     When debug mode is enabled, log messages will be output to the console.
 
     Args:
-        enable (bool): True to enable debug mode, False to disable
+        enable: True to enable debug mode, False to disable
     """
     if enable:
         handler = logging.StreamHandler()
@@ -37,7 +41,7 @@ def debug(enable=False):
                 logger.removeHandler(handler)
 
 
-def perform_control_click(driver, element):
+def perform_control_click(driver: webdriver.Chrome, element: WebElement) -> bool:
     """
     Perform a Control+click (or Command+click on Mac) on an element to open a link in a new tab.
 
@@ -46,7 +50,7 @@ def perform_control_click(driver, element):
         element: The element to click on
 
     Returns:
-        bool: True if a new tab was opened, False otherwise
+        True if a new tab was opened, False otherwise
     """
     handles_before_click = len(driver.window_handles)
 
@@ -65,7 +69,7 @@ def perform_control_click(driver, element):
         return False
 
 
-def switch_to_rightmost_tab(driver, element):
+def switch_to_rightmost_tab(driver: webdriver.Chrome, element: WebElement) -> bool:
     """
     Control+click on a link and switch to the rightmost (newest) tab.
 
@@ -74,7 +78,7 @@ def switch_to_rightmost_tab(driver, element):
         element: The element to click on
 
     Returns:
-        bool: True if successful, False otherwise
+        True if successful, False otherwise
     """
     if perform_control_click(driver, element):
         driver.switch_to.window(driver.window_handles[-1])
@@ -83,7 +87,7 @@ def switch_to_rightmost_tab(driver, element):
     return False
 
 
-def switch_to_new_tab(driver, element):
+def switch_to_new_tab(driver: webdriver.Chrome, element: WebElement) -> bool:
     """
     Control+click on a link and switch to the newly opened tab.
     This function identifies the new tab by comparing handle lists before and after clicking.
@@ -93,7 +97,7 @@ def switch_to_new_tab(driver, element):
         element: The element to click on
 
     Returns:
-        bool: True if successful, False otherwise
+        True if successful, False otherwise
     """
     handle_list_before = driver.window_handles
     if perform_control_click(driver, element):
@@ -105,7 +109,7 @@ def switch_to_new_tab(driver, element):
     return False
 
 
-def open_new_tab(driver, url, time_sleep=1):
+def open_new_tab(driver: webdriver.Chrome, url: str, time_sleep: float = 1) -> List[str]:
     """
     Open a new tab with the specified URL and switch to it.
 
@@ -115,7 +119,7 @@ def open_new_tab(driver, url, time_sleep=1):
         time_sleep: Time to wait for the tab to open (seconds)
 
     Returns:
-        list: List of newly created window handles
+        List of newly created window handles
     """
     handles_before = driver.window_handles
     driver.execute_script(f"window.open('{url}');")
@@ -130,7 +134,7 @@ def open_new_tab(driver, url, time_sleep=1):
     return new_handles
 
 
-def close_other_tabs(driver, current_tab_handle=None):
+def close_other_tabs(driver: webdriver.Chrome, current_tab_handle: Optional[str] = None) -> str:
     """
     Close all tabs except the current one (or specified tab).
 
@@ -139,7 +143,7 @@ def close_other_tabs(driver, current_tab_handle=None):
         current_tab_handle: Handle of the tab to keep open (defaults to current tab)
 
     Returns:
-        str: Handle of the tab that remained open
+        Handle of the tab that remained open
     """
     if current_tab_handle is None:
         current_tab_handle = driver.current_window_handle
@@ -154,7 +158,7 @@ def close_other_tabs(driver, current_tab_handle=None):
     return current_tab_handle
 
 
-def wait_with_buffer(driver, time_sleep=1, buffer_time=0.5, base_wait=10):
+def wait_with_buffer(driver: webdriver.Chrome, time_sleep: float = 1, buffer_time: float = 0.5, base_wait: int = 10) -> None:
     """
     Wait for the page to finish loading, then add a random buffer wait time.
     This helps prevent detection of automated browsing patterns by adding variability.
@@ -181,7 +185,7 @@ def wait_with_buffer(driver, time_sleep=1, buffer_time=0.5, base_wait=10):
         logger.error(f"Error during wait: {e}")
 
 
-def driver_start(url, heroku_mode=False):
+def driver_start(url: str, heroku_mode: Union[bool, str] = False) -> webdriver.Chrome:
     """
     Start a Chrome WebDriver and load the specified URL.
 

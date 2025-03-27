@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+from typing import List, Set, Optional, Union, Tuple, Callable, Any, Iterator, TypeVar, cast
 
 # Get the logger
 logger = logging.getLogger("selixir")
@@ -9,7 +10,7 @@ logger = logging.getLogger("selixir")
 TEMP_FILE_EXTENSIONS = (".crdownload", ".tmp", ".part")
 
 
-def _validate_directory(directory):
+def _validate_directory(directory: str) -> None:
     """
     Internal function: Validate that directory exists and is actually a directory.
 
@@ -27,7 +28,7 @@ def _validate_directory(directory):
         raise NotADirectoryError(f"Path is not a directory: {directory}")
 
 
-def _get_latest_file_from_list(file_list, directory):
+def _get_latest_file_from_list(file_list: List[str], directory: str) -> Optional[str]:
     """
     Internal function: Get the most recently modified file from a list of filenames.
 
@@ -50,7 +51,7 @@ def _get_latest_file_from_list(file_list, directory):
         return None
 
 
-def get_latest_file_path(directory):
+def get_latest_file_path(directory: str) -> Optional[str]:
     """
     Get the most recently modified file in the directory.
 
@@ -79,7 +80,7 @@ def get_latest_file_path(directory):
         return None
 
 
-def wait_for_new_file(directory, timeout_seconds=30, previous_path=None):
+def wait_for_new_file(directory: str, timeout_seconds: int = 30, previous_path: Optional[str] = None) -> str:
     """
     Wait for a new file to appear in the directory.
 
@@ -119,7 +120,7 @@ def wait_for_new_file(directory, timeout_seconds=30, previous_path=None):
     raise Exception(error_msg)
 
 
-def wait_for_download_completion(directory, before_files, timeout=60):
+def wait_for_download_completion(directory: str, before_files: Set[str], timeout: int = 60) -> str:
     """
     Get newly downloaded and completed files in the specified directory.
 
@@ -171,7 +172,7 @@ def wait_for_download_completion(directory, before_files, timeout=60):
                 time.sleep(3)
 
                 # Return the latest file
-                latest_file = _get_latest_file_from_list(new_files, directory)
+                latest_file = _get_latest_file_from_list(new_files_list, directory)
                 if latest_file:
                     logger.info(f"Download complete: {os.path.basename(latest_file)}")
                     return latest_file
@@ -187,7 +188,7 @@ def wait_for_download_completion(directory, before_files, timeout=60):
 
         if new_files:
             # File found after timeout
-            latest_file = _get_latest_file_from_list(new_files, directory)
+            latest_file = _get_latest_file_from_list(list(new_files), directory)
             if latest_file:
                 logger.warning(f"File found after timeout: {os.path.basename(latest_file)}")
                 return latest_file

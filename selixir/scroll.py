@@ -4,12 +4,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 import logging
+from typing import Union, Optional
 
 # Get the logger
 logger = logging.getLogger("selixir")
 
 
-def scroll_to_element_by_js(driver, element, top_offset=100):
+def scroll_to_element_by_js(driver, element: WebElement, top_offset: int = 100) -> None:
     """
     Scrolls to the specified web element, ensuring it's positioned at a specified offset from the top.
 
@@ -25,7 +26,7 @@ def scroll_to_element_by_js(driver, element, top_offset=100):
     driver.execute_script(f"window.scrollTo(0, {scroll_position});")
 
 
-def scroll_to_target(driver, target, top_offset=100, time_sleep=1):
+def scroll_to_target(driver, target: Union[WebElement, str], top_offset: int = 100, time_sleep: float = 1) -> None:
     """
     Scrolls the browser window to the specified target, which can be a web element or an XPath string.
     Optionally positions the target at a specified offset from the top and waits for a specified time.
@@ -35,6 +36,9 @@ def scroll_to_target(driver, target, top_offset=100, time_sleep=1):
         target: The web element or the XPath string of the element to scroll to.
         top_offset: The vertical offset from the top of the page to position the target at. Defaults to 100 pixels.
         time_sleep: Optional; Time to wait after scrolling to the target. Defaults to 1 second.
+
+    Raises:
+        ValueError: If the target is None or empty.
     """
 
     if not target:
