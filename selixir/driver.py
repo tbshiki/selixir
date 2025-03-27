@@ -109,14 +109,14 @@ def switch_to_new_tab(driver: webdriver.Chrome, element: WebElement) -> bool:
     return False
 
 
-def open_new_tab(driver: webdriver.Chrome, url: str, time_sleep: float = 1) -> List[str]:
+def open_new_tab(driver: webdriver.Chrome, url: str, timeout: float = 10) -> List[str]:
     """
     Open a new tab with the specified URL and switch to it.
 
     Args:
         driver: WebDriver instance
         url: URL to load in the new tab
-        time_sleep: Time to wait for the tab to open (seconds)
+        timeout: Maximum time to wait for the new tab to open (seconds)
 
     Returns:
         List of newly created window handles
@@ -124,14 +124,25 @@ def open_new_tab(driver: webdriver.Chrome, url: str, time_sleep: float = 1) -> L
     handles_before = driver.window_handles
     driver.execute_script(f"window.open('{url}');")
 
-    # Wait for the new tab to open
-    WebDriverWait(driver, time_sleep).until(lambda d: len(d.window_handles) > len(handles_before))
+    try:
+        # Wait for the new tab to open with proper WebDriverWait usage
+        # This waits up to 'timeout' seconds for the condition to be true
+        WebDriverWait(driver, timeout).until(lambda d: len(d.window_handles) > len(handles_before))
 
-    handles_after = driver.window_handles
-    new_handles = list(set(handles_after) - set(handles_before))
-    driver.switch_to.window(new_handles[0])
+        handles_after = driver.window_handles
+        new_handles = list(set(handles_after) - set(handles_before))
 
-    return new_handles
+        if new_handles:
+            driver.switch_to.window(new_handles[0])
+            logger.debug(f"Switched to new tab with handle {new_handles[0]}")
+            return new_handles
+        else:
+            logger.warning("No new tab was detected after script execution")
+            return []
+
+    except TimeoutException:
+        logger.warning(f"Timed out waiting for new tab to open (timeout: {timeout}s)")
+        return []
 
 
 def close_other_tabs(driver: webdriver.Chrome, current_tab_handle: Optional[str] = None) -> str:
