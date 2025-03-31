@@ -47,8 +47,16 @@ def test_get_latest_file_from_list_success():
     file_list = ["file1.txt", "file2.txt", "file3.txt"]
     directory = "/test/dir"
 
-    # os.path.getctimeの戻り値を設定
-    with patch("os.path.getctime") as mock_getctime:
+    # パスジョインの結果を事前に定義
+    full_paths = {
+        "file1.txt": "/test/dir/file1.txt",
+        "file2.txt": "/test/dir/file2.txt",
+        "file3.txt": "/test/dir/file3.txt"
+    }
+
+    # os.path.joinとos.path.getctimeの戻り値を設定
+    with patch("os.path.join", side_effect=lambda dir, file: full_paths[file]) as mock_join, \
+         patch("os.path.getctime") as mock_getctime:
         # file2.txtが最新になるように設定
         mock_getctime.side_effect = lambda path: {
             "/test/dir/file1.txt": 100,
@@ -169,8 +177,8 @@ def test_wait_for_download_completion_timeout(mock_directory):
          patch("selixir.file.time.sleep", return_value=None), \
          patch("selixir.file.time.time") as mock_time:
 
-        # タイムアウトをシミュレート
-        mock_time.side_effect = [100, 200]  # start, check (> start + timeout)
+        # タイムアウトをシミュレート - 十分な数の値を返す
+        mock_time.side_effect = [100, 105, 110, 115, 120, 125, 130, 135, 200]  # 十分な数の値
 
         # ファイルが追加されない
         mock_listdir.return_value = ["old_file1.txt", "old_file2.txt"]
@@ -187,8 +195,8 @@ def test_wait_for_download_completion_file_after_timeout(mock_directory):
          patch("selixir.file.time.sleep", return_value=None), \
          patch("selixir.file.time.time") as mock_time:
 
-        # タイムアウトをシミュレート
-        mock_time.side_effect = [100, 200]  # start, check (> start + timeout)
+        # タイムアウトをシミュレート - 十分な数の値を返す
+        mock_time.side_effect = [100, 105, 110, 115, 120, 125, 130, 135, 200]  # 十分な数の値
 
         # タイムアウト後にファイルが追加される
         mock_listdir.side_effect = [
