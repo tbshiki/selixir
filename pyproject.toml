@@ -1,6 +1,6 @@
 [project]
 name = "selixir"
-version = "0.1"
+version = "0.1.1"
 description = "A helpful utility wrapper for Selenium WebDriver."
 readme = "README.md"
 requires-python = ">=3.12"

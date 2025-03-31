@@ -1,12 +1,11 @@
-import time
+from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 import logging
 
 logger = logging.getLogger("selixir")
 
-def take_fullpage_screenshot(driver, filename: str) -> str:
+def take_fullpage_screenshot(driver: webdriver.Chrome, filename: str) -> str:
     """
     Take a full page screenshot, including content below the fold.
 
@@ -35,7 +34,7 @@ def take_fullpage_screenshot(driver, filename: str) -> str:
     return filename
 
 
-def take_element_screenshot(driver, element: WebElement, filename: str) -> str:
+def take_element_screenshot(driver: webdriver.Chrome, element: WebElement, filename: str) -> str:
     """
     Take a screenshot of a specific element.
 

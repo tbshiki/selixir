@@ -7,7 +7,7 @@ from .scroll import scroll_to_element_by_js, scroll_to_target
 __all__ = [
     "open_new_tab",  #driver
     "close_other_tabs",  #driver
-    "wait_with_buffer",  # .d
+    "wait_with_buffer",  # .driver
     "driver_start",  # .driver
     "perform_control_click",  # .driver
     "switch_to_rightmost_tab",  # .driver
