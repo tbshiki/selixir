@@ -10,11 +10,6 @@ It provides useful utility functions to make browser automation easier and more 
 - **Scroll Operations**: Scroll to elements in various ways
 - **File Operations**: Provides useful functions for monitoring downloaded files
 
-## Installation
-
-```bash
-pip install selixir
-```
 
 ## Quick Start
 
