@@ -1,4 +1,5 @@
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
@@ -10,7 +11,7 @@ from typing import Union, Optional
 logger = logging.getLogger("selixir")
 
 
-def scroll_to_element_by_js(driver, element: WebElement, top_offset: int = 100) -> None:
+def scroll_to_element_by_js(driver: WebDriver, element: WebElement, top_offset: int = 100) -> None:
     """
     Scrolls to the specified web element, ensuring it's positioned at a specified offset from the top.
 
@@ -26,7 +27,7 @@ def scroll_to_element_by_js(driver, element: WebElement, top_offset: int = 100) 
     driver.execute_script(f"window.scrollTo(0, {scroll_position});")
 
 
-def scroll_to_target(driver, target: Union[WebElement, str], top_offset: int = 100, time_sleep: float = 1, raise_on_failure: bool = False) -> None:
+def scroll_to_target(driver: WebDriver, target: Union[WebElement, str], top_offset: int = 100, time_sleep: float = 1, raise_on_failure: bool = False) -> None:
     """
     Scrolls the browser window to the specified target, which can be a web element or an XPath string.
     Optionally positions the target at a specified offset from the top and waits for a specified time.
@@ -83,4 +84,3 @@ def scroll_to_target(driver, target: Union[WebElement, str], top_offset: int = 1
             logger.error(f"JavaScript scrolling also failed: {js_error}")
             if raise_on_failure:
                 raise js_error
-

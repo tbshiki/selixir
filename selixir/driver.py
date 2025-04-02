@@ -17,7 +17,7 @@ from typing import List, Optional, Union, Literal, Any, Callable, TypeVar, cast
 logger = logging.getLogger("selixir")
 
 # Type variable for WebDriver
-Driver = TypeVar('Driver', bound='webdriver.Chrome')
+ChromeDriver = TypeVar('ChromeDriver', bound='webdriver.Chrome')
 
 
 def debug(enable: bool = False) -> None:
@@ -207,7 +207,8 @@ def driver_start(url: str, heroku_mode: Union[bool, str] = False) -> webdriver.C
 
     Args:
         url: URL to load
-        heroku_mode: Whether to use settings optimized for Heroku environment
+        heroku_mode: Whether to use settings optimized for Heroku environment.
+                     Accepts either a boolean or string ('true'/'false')
 
     Returns:
         Initialized WebDriver instance
