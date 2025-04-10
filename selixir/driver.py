@@ -12,7 +12,7 @@ import time
 import platform
 import logging
 import uuid
-from typing import List, Optional, Union, Literal, Any, Callable, TypeVar, cast
+from typing import List, Optional, Union, TypeVar
 
 # Configure the logger
 logger = logging.getLogger("selixir")
@@ -225,7 +225,7 @@ def driver_start(url: str, heroku_mode: Union[bool, str] = False) -> webdriver.C
         unique_user_data_dir = f"/tmp/selenium_profile_{uuid.uuid4()}"
 
         logger.info("Starting ChromeDriver with Heroku environment settings.")
-        options.add_argument("--headless=new")
+        options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-setuid-sandbox")
