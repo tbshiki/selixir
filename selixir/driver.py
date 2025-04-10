@@ -222,36 +222,43 @@ def driver_start(url: str, heroku_mode: Union[bool, str] = False) -> webdriver.C
     is_heroku_mode = heroku_mode is True or (isinstance(heroku_mode, str) and heroku_mode.lower() == "true")
 
     if is_heroku_mode:
-        unique_user_data_dir = f"/tmp/selenium_profile_{uuid.uuid4()}"
-
         logger.info("Starting ChromeDriver with Heroku environment settings.")
-        options.add_argument("--headless")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-setuid-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-extensions")
-        options.add_argument("--disable-software-rasterizer")
-        options.add_argument("--disable-background-networking")
-        options.add_argument("--disable-hang-monitor")
-        options.add_argument("--disable-sync")
-        options.add_argument("--disable-default-apps")
-        options.add_argument("--mute-audio")
-        options.add_argument("--metrics-recording-only")
-        options.add_argument("--no-first-run")
-        options.add_argument("--disable-site-isolation-trials")
-        options.add_argument(f"--user-data-dir={unique_user_data_dir}")
 
-    options.add_argument("--start-maximized")
-    options.add_argument("--lang=ja-JP")
+        # Basic headless settings
+        options.add_argument("--headless")  # Enable headless mode
+        options.add_argument("--disable-gpu")  # Disable GPU usage
+        options.add_argument("--no-sandbox")  # Disable sandbox (recommended on Heroku)
+        options.add_argument("--disable-setuid-sandbox")  # Disable setuid sandbox for security
+        options.add_argument("--disable-dev-shm-usage")  # Minimize memory usage
 
+        # Memory reduction and performance optimization
+        options.add_argument("--disable-extensions")  # Disable browser extensions
+        options.add_argument("--disable-software-rasterizer")  # Disable GPU-based rendering
+        options.add_argument("--disable-background-networking")  # Disable background network activities
+        options.add_argument("--disable-hang-monitor")  # Disable hang detection feature
+        options.add_argument("--disable-sync")  # Disable Chrome sync functionality
+        options.add_argument("--disable-default-apps")  # Disable loading of default apps
+        options.add_argument("--mute-audio")  # Mute audio output
+        options.add_argument("--metrics-recording-only")  # Limit Chrome metrics collection
+        options.add_argument("--no-first-run")  # Skip first run tasks
+
+        # Additional memory optimization
+        options.add_argument("--disable-site-isolation-trials")  # Reduce memory usage while maintaining stability
+
+        # Language setting
+        options.add_argument("--lang=ja-JP")  # Set browser language to Japanese
+
+    options.add_argument("--start-maximized")  # Maximize window on startup
+
+    # Cache and content settings
     prefs = {
-        "profile.default_content_setting_values.popups": 2,
-        "profile.default_content_setting_values.geolocation": 2,
-        "profile.default_content_setting_values.notifications": 2,
-        "disk-cache-size": 10485760,
-        "safebrowsing.enabled": True,
+        "profile.default_content_setting_values.popups": 2,  # Block pop-ups
+        "profile.default_content_setting_values.geolocation": 2,  # Block geolocation
+        "profile.default_content_setting_values.notifications": 2,  # Block notifications
+        "disk-cache-size": 10485760,  # Set disk cache size (10MB)
+        "safebrowsing.enabled": True,  # Enable Safe Browsing
     }
+
     options.add_experimental_option("prefs", prefs)
 
     try:
