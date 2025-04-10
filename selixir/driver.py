@@ -11,13 +11,14 @@ import random
 import time
 import platform
 import logging
+import uuid
 from typing import List, Optional, Union, Literal, Any, Callable, TypeVar, cast
 
 # Configure the logger
 logger = logging.getLogger("selixir")
 
 # Type variable for WebDriver
-ChromeDriver = TypeVar('ChromeDriver', bound='webdriver.Chrome')
+ChromeDriver = TypeVar("ChromeDriver", bound="webdriver.Chrome")
 
 
 def debug(enable: bool = False) -> None:
@@ -221,6 +222,8 @@ def driver_start(url: str, heroku_mode: Union[bool, str] = False) -> webdriver.C
     is_heroku_mode = heroku_mode is True or (isinstance(heroku_mode, str) and heroku_mode.lower() == "true")
 
     if is_heroku_mode:
+        unique_user_data_dir = f"/tmp/selenium_profile_{uuid.uuid4()}"
+
         logger.info("Starting ChromeDriver with Heroku environment settings.")
         options.add_argument("--headless=new")
         options.add_argument("--disable-gpu")
@@ -237,6 +240,7 @@ def driver_start(url: str, heroku_mode: Union[bool, str] = False) -> webdriver.C
         options.add_argument("--metrics-recording-only")
         options.add_argument("--no-first-run")
         options.add_argument("--disable-site-isolation-trials")
+        options.add_argument(f"--user-data-dir={unique_user_data_dir}")
 
     options.add_argument("--start-maximized")
     options.add_argument("--lang=ja-JP")
